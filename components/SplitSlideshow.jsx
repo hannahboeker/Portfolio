@@ -41,21 +41,9 @@ const rightImages = [
   "/images/250316-Illu-insta.mp4",
 ];
 
-const isVideo = (src: string) => /\.(mp4|webm|ogg)$/i.test(src);
+const isVideo = (src) => /\.(mp4|webm|ogg)$/i.test(src);
 
-function MediaItem({
-  src,
-  onPlay,
-  onEnded,
-  videoRef,
-  priority = false,
-}: {
-  src: string;
-  onPlay: () => void;
-  onEnded: () => void;
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  priority?: boolean;
-}) {
+function MediaItem({ src, onPlay, onEnded, videoRef, priority = false }) {
   useEffect(() => {
     if (isVideo(src) && videoRef?.current) {
       videoRef.current.load();
@@ -85,22 +73,20 @@ function MediaItem({
   }
 
   return (
-    <div style={{ position: "relative", width: "100%" }}>
-      <Image
-        src={src}
-        alt=""
-        width={1200}
-        height={1600}
-        priority={priority}
-        sizes="50vw"
-        style={{
-          width: "100%",
-          height: "auto",
-          display: "block",
-          pointerEvents: "none",
-        }}
-      />
-    </div>
+    <Image
+      src={src}
+      alt=""
+      width={1200}
+      height={1600}
+      priority={priority}
+      sizes="50vw"
+      style={{
+        width: "100%",
+        height: "auto",
+        display: "block",
+        pointerEvents: "none",
+      }}
+    />
   );
 }
 
@@ -108,13 +94,13 @@ export default function SplitSlideshow() {
   const [leftIndex, setLeftIndex] = useState(0);
   const [rightIndex, setRightIndex] = useState(0);
 
-  const nextAutoSide = useRef<"left" | "right">("left");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextAutoSide = useRef("left");
+  const timerRef = useRef(null);
   const videoPlayingRef = useRef({ left: false, right: false });
-  const leftVideoRef = useRef<HTMLVideoElement>(null);
-  const rightVideoRef = useRef<HTMLVideoElement>(null);
+  const leftVideoRef = useRef(null);
+  const rightVideoRef = useRef(null);
 
-  const advanceSide = (side: "left" | "right") => {
+  const advanceSide = (side) => {
     if (side === "left") {
       setLeftIndex((p) => (p + 1) % leftImages.length);
     } else {
@@ -122,8 +108,8 @@ export default function SplitSlideshow() {
     }
   };
 
-  const scheduleNext = (side: "left" | "right") => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+  const scheduleNext = (side) => {
+    clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       advanceSide(side);
       nextAutoSide.current = side === "left" ? "right" : "left";
@@ -133,12 +119,9 @@ export default function SplitSlideshow() {
 
   useEffect(() => {
     scheduleNext("left");
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    return () => clearTimeout(timerRef.current);
   }, []);
 
-  // Nächstes Bild vorausladen
   useEffect(() => {
     const nextLeft = (leftIndex + 1) % leftImages.length;
     const nextRight = (rightIndex + 1) % rightImages.length;
@@ -152,12 +135,12 @@ export default function SplitSlideshow() {
     }
   }, [leftIndex, rightIndex]);
 
-  const handleVideoStart = (side: "left" | "right") => {
+  const handleVideoStart = (side) => {
     videoPlayingRef.current[side] = true;
-    if (timerRef.current) clearTimeout(timerRef.current);
+    clearTimeout(timerRef.current);
   };
 
-  const handleVideoEnd = (side: "left" | "right") => {
+  const handleVideoEnd = (side) => {
     videoPlayingRef.current[side] = false;
     advanceSide(side);
     nextAutoSide.current = side === "left" ? "right" : "left";
@@ -183,8 +166,8 @@ export default function SplitSlideshow() {
     <>
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; min-height: 100vh; overflow-x: hidden; background: #bdf7b2; }
-        .split-wrapper { display: flex; width: 100%; min-height: 100vh; cursor: pointer; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #8ef2ff; scrollbar-gutter: stable; }
+        .split-wrapper { display: flex; width: 100%; min-height: 100vh; cursor: pointer; padding-bottom: 2.5em; }
         .panel { width: 50vw; }
         @media (max-width: 375px) {
           .split-wrapper { flex-direction: column; min-height: unset; }
