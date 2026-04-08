@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import styled from "styled-components";
 
 const leftImages = [
   "/images/InKontakt4.png",
@@ -43,50 +44,103 @@ const rightImages = [
 
 const isVideo = (src) => /\.(mp4|webm|ogg)$/i.test(src);
 
+// Styled Components
+const Wrapper = styled.div`
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  cursor: pointer;
+  padding-bottom: 2.5em;
+  background: #8ef2ff;
+
+  /* Mobile only */
+  @media (max-width: 768px) {
+    flex-direction: column;
+    height: calc(100vh - 2.5em); /* Höhe bis Navigation */
+  }
+`;
+
+const Panel = styled.div`
+  width: 50vw;
+  display: flex;
+  align-items: flex-start;
+
+  /* Mobile only */
+  @media (max-width: 768px) {
+    width: 100vw;
+    justify-content: flex-start; /* linksbündig */
+    align-items: flex-start; /* oben ausrichten */
+  }
+`;
+
+const MediaWrapper = styled.div`
+  width: 100%;
+  height: auto;
+
+  /* Mobile only */
+  @media (max-width: 768px) {
+    height: 100%;
+    width: auto;
+  }
+
+  img,
+  video {
+    width: 100%;
+    height: auto;
+    display: block;
+    pointer-events: none;
+    object-fit: contain;
+
+    /* Mobile only */
+    @media (max-width: 768px) {
+      height: 100%;
+      width: auto;
+      max-height: 100%;
+      max-width: 100%;
+    }
+  }
+`;
+
 function MediaItem({ src, onPlay, onEnded, videoRef, priority = false }) {
   useEffect(() => {
     if (isVideo(src) && videoRef?.current) {
       videoRef.current.load();
       videoRef.current.play().catch(() => {});
     }
-  }, [src]);
+  }, [src, videoRef]);
 
   if (isVideo(src)) {
     return (
-      <video
-        ref={videoRef}
-        src={src}
-        onPlay={onPlay}
-        onEnded={onEnded}
-        autoPlay
-        muted
-        playsInline
-        preload="auto"
-        style={{
-          width: "100%",
-          height: "auto",
-          display: "block",
-          pointerEvents: "none",
-        }}
-      />
+      <MediaWrapper>
+        <video
+          ref={videoRef}
+          src={src}
+          onPlay={onPlay}
+          onEnded={onEnded}
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+        />
+      </MediaWrapper>
     );
   }
 
   return (
-    <Image
-      src={src}
-      alt=""
-      width={1200}
-      height={1600}
-      priority={priority}
-      sizes="50vw"
-      style={{
-        width: "100%",
-        height: "auto",
-        display: "block",
-        pointerEvents: "none",
-      }}
-    />
+    <MediaWrapper>
+      <Image
+        src={src}
+        alt=""
+        width={1200}
+        height={1600}
+        priority={priority}
+        sizes="(max-width: 768px) 100vw, 50vw"
+        style={{
+          width: "100%",
+          height: "auto",
+        }}
+      />
+    </MediaWrapper>
   );
 }
 
@@ -163,38 +217,25 @@ export default function SplitSlideshow() {
   };
 
   return (
-    <>
-      <style>{`
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background: #8ef2ff; scrollbar-gutter: stable; }
-        .split-wrapper { display: flex; width: 100%; min-height: 100vh; cursor: pointer; padding-bottom: 2.5em; }
-        .panel { width: 50vw; }
-        @media (max-width: 375px) {
-          .split-wrapper { flex-direction: column; min-height: unset; }
-          .panel { width: 100vw; }
-        }
-      `}</style>
-
-      <div className="split-wrapper" onClick={handleClick}>
-        <div className="panel">
-          <MediaItem
-            src={leftImages[leftIndex]}
-            videoRef={leftVideoRef}
-            onPlay={() => handleVideoStart("left")}
-            onEnded={() => handleVideoEnd("left")}
-            priority={leftIndex === 0}
-          />
-        </div>
-        <div className="panel">
-          <MediaItem
-            src={rightImages[rightIndex]}
-            videoRef={rightVideoRef}
-            onPlay={() => handleVideoStart("right")}
-            onEnded={() => handleVideoEnd("right")}
-            priority={rightIndex === 0}
-          />
-        </div>
-      </div>
-    </>
+    <Wrapper onClick={handleClick}>
+      <Panel>
+        <MediaItem
+          src={leftImages[leftIndex]}
+          videoRef={leftVideoRef}
+          onPlay={() => handleVideoStart("left")}
+          onEnded={() => handleVideoEnd("left")}
+          priority={leftIndex === 0}
+        />
+      </Panel>
+      <Panel>
+        <MediaItem
+          src={rightImages[rightIndex]}
+          videoRef={rightVideoRef}
+          onPlay={() => handleVideoStart("right")}
+          onEnded={() => handleVideoEnd("right")}
+          priority={rightIndex === 0}
+        />
+      </Panel>
+    </Wrapper>
   );
 }
