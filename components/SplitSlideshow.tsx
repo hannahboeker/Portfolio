@@ -53,7 +53,7 @@ function MediaItem({
   src: string;
   onPlay: () => void;
   onEnded: () => void;
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   priority?: boolean;
 }) {
   useEffect(() => {
