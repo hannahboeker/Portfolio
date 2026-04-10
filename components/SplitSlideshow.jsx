@@ -44,61 +44,51 @@ const rightImages = [
 
 const isVideo = (src) => /\.(mp4|webm|ogg)$/i.test(src);
 
-// Styled Components
+// Wrapper: Desktop = Zeile, Mobile = Spalte. Immer genau 100vh hoch.
 const Wrapper = styled.div`
   display: flex;
-  width: 100%;
-  min-height: 100vh;
+  flex-direction: row;
+  width: 100vw;
+  height: calc(100vh - 2.5em);
   cursor: pointer;
-  padding-bottom: 2.5em;
   background: #8ef2ff;
+  overflow: hidden;
 
-  /* Mobile only */
   @media (max-width: 768px) {
     flex-direction: column;
-    height: calc(100vh - 2.5em); /* Höhe bis Navigation */
   }
 `;
-
 const Panel = styled.div`
-  width: 50vw;
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   align-items: flex-start;
+  justify-content: flex-start;
+  overflow: hidden;
 
-  /* Mobile only */
   @media (max-width: 768px) {
-    width: 100vw;
-    justify-content: flex-start; /* linksbündig */
-    align-items: flex-start; /* oben ausrichten */
+    flex: 1 1 50%;
+    width: 100%;
   }
 `;
 
-const MediaWrapper = styled.div`
+const StyledImage = styled(Image)`
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
+  object-position: left top;
+  display: block;
+  pointer-events: none;
+`;
 
-  /* Mobile only */
-  @media (max-width: 768px) {
-    height: 100%;
-    width: auto;
-  }
-
-  img,
-  video {
-    width: 100%;
-    height: auto;
-    display: block;
-    pointer-events: none;
-    object-fit: contain;
-
-    /* Mobile only */
-    @media (max-width: 768px) {
-      height: 100%;
-      width: auto;
-      max-height: 100%;
-      max-width: 100%;
-    }
-  }
+const StyledVideo = styled.video`
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left top;
+  display: block;
+  pointer-events: none;
 `;
 
 function MediaItem({ src, onPlay, onEnded, videoRef, priority = false }) {
@@ -111,36 +101,27 @@ function MediaItem({ src, onPlay, onEnded, videoRef, priority = false }) {
 
   if (isVideo(src)) {
     return (
-      <MediaWrapper>
-        <video
-          ref={videoRef}
-          src={src}
-          onPlay={onPlay}
-          onEnded={onEnded}
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-        />
-      </MediaWrapper>
+      <StyledVideo
+        ref={videoRef}
+        src={src}
+        onPlay={onPlay}
+        onEnded={onEnded}
+        autoPlay
+        muted
+        playsInline
+        preload="auto"
+      />
     );
   }
 
   return (
-    <MediaWrapper>
-      <Image
-        src={src}
-        alt=""
-        width={1200}
-        height={1600}
-        priority={priority}
-        sizes="(max-width: 768px) 100vw, 50vw"
-        style={{
-          width: "100%",
-          height: "auto",
-        }}
-      />
-    </MediaWrapper>
+    <StyledImage
+      src={src}
+      alt=""
+      fill
+      priority={priority}
+      sizes="(max-width: 768px) 100vw, 50vw"
+    />
   );
 }
 
@@ -218,7 +199,7 @@ export default function SplitSlideshow() {
 
   return (
     <Wrapper onClick={handleClick}>
-      <Panel>
+      <Panel style={{ position: "relative" }}>
         <MediaItem
           src={leftImages[leftIndex]}
           videoRef={leftVideoRef}
@@ -227,7 +208,7 @@ export default function SplitSlideshow() {
           priority={leftIndex === 0}
         />
       </Panel>
-      <Panel>
+      <Panel style={{ position: "relative" }}>
         <MediaItem
           src={rightImages[rightIndex]}
           videoRef={rightVideoRef}
