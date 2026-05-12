@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import styled from "styled-components";
 
+// ── Desktop ──────────────────────────────────────────────────────
 const leftImages = [
   "/images/InKontakt4.png",
   "/images/230721_HB_PF-7091.jpg",
@@ -42,6 +43,25 @@ const rightImages = [
   "/images/250316-Illu-insta.mp4",
 ];
 
+// ── Mobile ───────────────────────────────────────────────────────
+const mobileLeftImages = [
+  "/images/mobile/230721_HB_PF-6827-Edit-MOCKUP-CARBON_mobile.jpg",
+  "/images/mobile/221212_Böker2554_mobile.jpg",
+  "/images/mobile/230721_HB_PF-6789-EXTRAHINTERGRUND-2_mobile.jpg",
+  "/images/mobile/230721_HB_PF-6861_mobile.jpg",
+  "/images/mobile/230721_HB_PF-6937_mobile.jpg",
+  "/images/mobile/240727-illu-insta3_mobile.jpg",
+];
+
+const mobileRightImages = [
+  "/images/mobile/230721_HB_PF-6817-v2_mobile.jpg",
+  "/images/mobile/221212_Böker2562-11.14.41_mobile.jpg",
+  "/images/mobile/230721_HB_PF-6846-Edit_mobile.jpg",
+  "/images/mobile/230721_HB_PF-6980_mobile.jpg",
+  "/images/mobile/230721_HB_PF-7054-v2_mobile.jpg",
+  "/images/mobile/A4_Brochure_Mockup_6_mobile.jpg",
+];
+
 const isVideo = (src) => /\.(mp4|webm|ogg)$/i.test(src);
 
 // Wrapper: Desktop = Zeile, Mobile = Spalte. Immer genau 100vh hoch.
@@ -55,21 +75,37 @@ const Wrapper = styled.div`
   overflow: hidden;
 
   @media (max-width: 768px) {
-    flex-direction: column;
+    position: relative;
+    height: calc(100dvh - 2.5em);
   }
 `;
+
 const Panel = styled.div`
   flex: 1 1 50%;
   min-width: 0;
   min-height: 0;
+  position: relative;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
   overflow: hidden;
 
   @media (max-width: 768px) {
-    flex: 1 1 50%;
-    width: 100%;
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: block;
+    overflow: hidden;
+
+    &:first-child {
+      top: 0;
+      height: calc(50% + 1px);
+    }
+
+    &:last-child {
+      bottom: 0;
+      height: calc(50% + 1px);
+    }
   }
 `;
 
@@ -77,7 +113,7 @@ const StyledImage = styled(Image)`
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: left top;
+  object-position: ${({ $pos }) => $pos || "left top"};
   display: block;
   pointer-events: none;
 `;
@@ -86,12 +122,12 @@ const StyledVideo = styled.video`
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: left top;
+  object-position: ${({ $pos }) => $pos || "left top"};
   display: block;
   pointer-events: none;
 `;
 
-function MediaItem({ src, onPlay, onEnded, videoRef, priority = false }) {
+function MediaItem({ src, onPlay, onEnded, videoRef, priority = false, isMobile = false, mobileContain = false }) {
   useEffect(() => {
     if (isVideo(src) && videoRef?.current) {
       videoRef.current.load();
@@ -100,6 +136,9 @@ function MediaItem({ src, onPlay, onEnded, videoRef, priority = false }) {
   }, [src, videoRef]);
 
   if (isVideo(src)) {
+    const videoStyle = isMobile
+      ? { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: mobileContain ? "contain" : "cover", objectPosition: "left top", display: "block", pointerEvents: "none" }
+      : {};
     return (
       <StyledVideo
         ref={videoRef}
@@ -110,6 +149,18 @@ function MediaItem({ src, onPlay, onEnded, videoRef, priority = false }) {
         muted
         playsInline
         preload="auto"
+        style={videoStyle}
+      />
+    );
+  }
+
+  if (isMobile) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        src={src}
+        alt=""
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: mobileContain ? "contain" : "cover", objectPosition: "left top", display: "block", pointerEvents: "none" }}
       />
     );
   }
@@ -120,7 +171,7 @@ function MediaItem({ src, onPlay, onEnded, videoRef, priority = false }) {
       alt=""
       fill
       priority={priority}
-      sizes="(max-width: 768px) 100vw, 50vw"
+      sizes="50vw"
     />
   );
 }
@@ -128,6 +179,17 @@ function MediaItem({ src, onPlay, onEnded, videoRef, priority = false }) {
 export default function SplitSlideshow() {
   const [leftIndex, setLeftIndex] = useState(0);
   const [rightIndex, setRightIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const activeLeft  = isMobile ? mobileLeftImages  : leftImages;
+  const activeRight = isMobile ? mobileRightImages : rightImages;
 
   const nextAutoSide = useRef("left");
   const timerRef = useRef(null);
@@ -137,9 +199,9 @@ export default function SplitSlideshow() {
 
   const advanceSide = (side) => {
     if (side === "left") {
-      setLeftIndex((p) => (p + 1) % leftImages.length);
+      setLeftIndex((p) => (p + 1) % activeLeft.length);
     } else {
-      setRightIndex((p) => (p + 1) % rightImages.length);
+      setRightIndex((p) => (p + 1) % activeRight.length);
     }
   };
 
@@ -158,17 +220,17 @@ export default function SplitSlideshow() {
   }, []);
 
   useEffect(() => {
-    const nextLeft = (leftIndex + 1) % leftImages.length;
-    const nextRight = (rightIndex + 1) % rightImages.length;
-    if (!isVideo(leftImages[nextLeft])) {
+    const nextLeft  = (leftIndex  + 1) % activeLeft.length;
+    const nextRight = (rightIndex + 1) % activeRight.length;
+    if (!isVideo(activeLeft[nextLeft])) {
       const img = new window.Image();
-      img.src = leftImages[nextLeft];
+      img.src = activeLeft[nextLeft];
     }
-    if (!isVideo(rightImages[nextRight])) {
+    if (!isVideo(activeRight[nextRight])) {
       const img = new window.Image();
-      img.src = rightImages[nextRight];
+      img.src = activeRight[nextRight];
     }
-  }, [leftIndex, rightIndex]);
+  }, [leftIndex, rightIndex, activeLeft, activeRight]);
 
   const handleVideoStart = (side) => {
     videoPlayingRef.current[side] = true;
@@ -197,24 +259,30 @@ export default function SplitSlideshow() {
     scheduleNext(nextAutoSide.current);
   };
 
+  const safeLeftIndex  = leftIndex  % activeLeft.length;
+  const safeRightIndex = rightIndex % activeRight.length;
+
   return (
     <Wrapper onClick={handleClick}>
-      <Panel style={{ position: "relative" }}>
+      <Panel>
         <MediaItem
-          src={leftImages[leftIndex]}
+          src={activeLeft[safeLeftIndex]}
           videoRef={leftVideoRef}
           onPlay={() => handleVideoStart("left")}
           onEnded={() => handleVideoEnd("left")}
-          priority={leftIndex === 0}
+          priority={safeLeftIndex === 0}
+          isMobile={isMobile}
         />
       </Panel>
-      <Panel style={{ position: "relative" }}>
+      <Panel>
         <MediaItem
-          src={rightImages[rightIndex]}
+          src={activeRight[safeRightIndex]}
           videoRef={rightVideoRef}
           onPlay={() => handleVideoStart("right")}
           onEnded={() => handleVideoEnd("right")}
-          priority={rightIndex === 0}
+          priority={safeRightIndex === 0}
+          isMobile={isMobile}
+          mobileContain
         />
       </Panel>
     </Wrapper>
