@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import styled from "styled-components";
 
@@ -45,21 +45,49 @@ const rightImages = [
 
 // ── Mobile ───────────────────────────────────────────────────────
 const mobileLeftImages = [
-  "/images/mobile/230721_HB_PF-6827-Edit-MOCKUP-CARBON_mobile.jpg",
-  "/images/mobile/221212_Böker2554_mobile.jpg",
-  "/images/mobile/230721_HB_PF-6789-EXTRAHINTERGRUND-2_mobile.jpg",
-  "/images/mobile/230721_HB_PF-6861_mobile.jpg",
-  "/images/mobile/230721_HB_PF-6937_mobile.jpg",
-  "/images/mobile/240727-illu-insta3_mobile.jpg",
+  "/images/mobile/InKontakt4_mobile.jpg", // editorial
+  "/images/mobile/HaFra_plant-like_object_shaped_like_a_pilea_made_entirely_of_ra_91fa44f4-897c-483c-9aca-c0563029d14b_mobile.jpg", // KI
+  "/images/mobile/Wohnheim-innen2_mobile.jpg", // architektur
+  "/images/mobile/230721_HB_PF-6827-Edit-MOCKUP-CARBON_mobile.jpg", // mockup foto
+  "/images/mobile/shirt-illu.jpg", // illustration
+  "/images/mobile/230721_HB_PF-6861_mobile.jpg", // porträt
+  "/images/2602-TAR-Animation-2 (konvertiert).aep.mp4", // video
+  "/images/mobile/A4_Karten.jpg", // grafik
+  "/images/mobile/HaFra_A_distant_goat_with_surreal_intensely_bright_green_fur_pa_8e61d197-be7d-424e-9561-8c807cf0b41b_mobile.jpg", // KI
+  "/images/mobile/230721_HB_PF-6789-EXTRAHINTERGRUND-2_mobile.jpg", // foto
+  "/images/mobile/InKontakt-1_mobile.jpg", // editorial
+  "/images/mobile/230721_HB_PF-7054-v2_mobile.jpg", // porträt
+  "/images/mobile/Wohnheim-innen3_mobile.jpg", // architektur
+  "/images/mobile/240727-illu-insta3_mobile.jpg", // illustration
+  "/images/mobile/pic_2021-06-02_170121_mobile.jpg", // foto
+  "/images/mobile/Unbenanntes_Projekt-11_mobile.jpg", // grafik
+  "/images/mobile/230721_HB_PF-6937_mobile.jpg", // porträt
+  "/images/mobile/IMG_6609_mobile.jpg", // foto
+  "/images/mobile/pic_2022-01-21_145936_mobile.jpg", // foto
 ];
 
 const mobileRightImages = [
-  "/images/mobile/230721_HB_PF-6817-v2_mobile.jpg",
-  "/images/mobile/221212_Böker2562-11.14.41_mobile.jpg",
-  "/images/mobile/230721_HB_PF-6846-Edit_mobile.jpg",
-  "/images/mobile/230721_HB_PF-6980_mobile.jpg",
-  "/images/mobile/230721_HB_PF-7054-v2_mobile.jpg",
-  "/images/mobile/A4_Brochure_Mockup_6_mobile.jpg",
+  "/images/mobile/A4_Brochure_Mockup_7_mobile.jpg", // mockup
+  "/images/250316-Illu-insta.mp4", // video
+  "/images/mobile/221212_Böker2554_mobile.jpg", // editorial foto
+  "/images/mobile/HaFra_plant-like_object_shaped_like_a_pilea_made_entirely_of_ra_afb44ae2-1962-4b59-972a-3e5bb184976c_mobile.jpg", // KI
+  "/images/mobile/Litfassaule_mobile.jpg", // street/poster
+  "/images/HaFra_plant-like_object_shaped_like_a_pilea_made_entirely_of_ra_7c69855d-2a23-4a13-ade7-956c69873a24.mp4", // KI video
+  "/images/mobile/Ei-Lampe_mobile.jpg", // objekt
+  "/images/mobile/Posters_on_Fence_Mockup_1_mobile.jpg", // mockup
+  "/images/mobile/230721_HB_PF-6980_mobile.jpg", // porträt
+  "/images/mobile/IMG_6603_mobile.jpg", // foto
+  "/images/HansNeuburg_Digitorial_1.mp4", // video editorial
+  "/images/Komp 1.mp4", // video
+  "/images/mobile/221212_Böker2562-11.14.41_mobile.jpg", // editorial foto
+  "/images/mobile/230721_HB_PF-6846-Edit_mobile.jpg", // foto
+  "/images/mobile/A4_Brochure_Mockup_6_mobile.jpg", // mockup
+  "/images/mobile/pic_2022-01-21_150339_mobile.jpg", // foto
+  "/images/mobile/pic_2021-06-02_170712_mobile.jpg", // foto
+  "/images/mobile/230721_HB_PF-7091_mobile.jpg", // porträt
+  "/images/mobile/pic_2021-06-02_170919_mobile.jpg", // foto
+  "/images/mobile/230721_HB_PF-6817-v2_mobile.jpg", // porträt
+  "/images/mobile/IMG_6621_mobile.jpg", // foto
 ];
 
 const isVideo = (src) => /\.(mp4|webm|ogg)$/i.test(src);
@@ -68,10 +96,10 @@ const isVideo = (src) => /\.(mp4|webm|ogg)$/i.test(src);
 const Wrapper = styled.div`
   display: flex;
   flex-direction: row;
-  width: 100vw;
+  width: 100%;
   height: calc(100vh - 2.5em);
   cursor: pointer;
-  background: #8ef2ff;
+  background: #ffffff;
   overflow: hidden;
 
   @media (max-width: 768px) {
@@ -96,6 +124,9 @@ const Panel = styled.div`
     right: 0;
     display: block;
     overflow: hidden;
+    transition:
+      height 0.25s ease,
+      top 0.25s ease;
 
     &:first-child {
       top: 0;
@@ -127,7 +158,17 @@ const StyledVideo = styled.video`
   pointer-events: none;
 `;
 
-function MediaItem({ src, onPlay, onEnded, videoRef, priority = false, isMobile = false, mobileContain = false }) {
+function MediaItem({
+  src,
+  onPlay,
+  onEnded,
+  videoRef,
+  priority = false,
+  isMobile = false,
+  mobileContain = false,
+  objectPos = "left top",
+  onNaturalDims,
+}) {
   useEffect(() => {
     if (isVideo(src) && videoRef?.current) {
       videoRef.current.load();
@@ -137,7 +178,16 @@ function MediaItem({ src, onPlay, onEnded, videoRef, priority = false, isMobile 
 
   if (isVideo(src)) {
     const videoStyle = isMobile
-      ? { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: mobileContain ? "contain" : "cover", objectPosition: "left top", display: "block", pointerEvents: "none" }
+      ? {
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: mobileContain ? "contain" : "cover",
+          objectPosition: objectPos,
+          display: "block",
+          pointerEvents: "none",
+        }
       : {};
     return (
       <StyledVideo
@@ -145,6 +195,15 @@ function MediaItem({ src, onPlay, onEnded, videoRef, priority = false, isMobile 
         src={src}
         onPlay={onPlay}
         onEnded={onEnded}
+        onLoadedMetadata={
+          isMobile && onNaturalDims
+            ? (e) =>
+                onNaturalDims({
+                  w: e.target.videoWidth,
+                  h: e.target.videoHeight,
+                })
+            : undefined
+        }
         autoPlay
         muted
         playsInline
@@ -155,25 +214,34 @@ function MediaItem({ src, onPlay, onEnded, videoRef, priority = false, isMobile 
   }
 
   if (isMobile) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
         src={src}
         alt=""
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: mobileContain ? "contain" : "cover", objectPosition: "left top", display: "block", pointerEvents: "none" }}
+        onLoad={
+          onNaturalDims
+            ? (e) =>
+                onNaturalDims({
+                  w: e.target.naturalWidth,
+                  h: e.target.naturalHeight,
+                })
+            : undefined
+        }
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: mobileContain ? "contain" : "cover",
+          objectPosition: objectPos,
+          display: "block",
+          pointerEvents: "none",
+        }}
       />
     );
   }
 
-  return (
-    <StyledImage
-      src={src}
-      alt=""
-      fill
-      priority={priority}
-      sizes="50vw"
-    />
-  );
+  return <StyledImage src={src} alt="" fill priority={priority} sizes="50vw" />;
 }
 
 export default function SplitSlideshow() {
@@ -188,7 +256,7 @@ export default function SplitSlideshow() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const activeLeft  = isMobile ? mobileLeftImages  : leftImages;
+  const activeLeft = isMobile ? mobileLeftImages : leftImages;
   const activeRight = isMobile ? mobileRightImages : rightImages;
 
   const nextAutoSide = useRef("left");
@@ -196,6 +264,39 @@ export default function SplitSlideshow() {
   const videoPlayingRef = useRef({ left: false, right: false });
   const leftVideoRef = useRef(null);
   const rightVideoRef = useRef(null);
+
+  const wrapperRef = useRef(null);
+  const upperDimsRef = useRef(null);
+  const [splitY, setSplitY] = useState(null);
+
+  const recalcSplit = useCallback(() => {
+    if (!wrapperRef.current || !upperDimsRef.current || !isMobile) return;
+    const { w, h } = upperDimsRef.current;
+    if (!w || !h) return;
+    const ww = wrapperRef.current.offsetWidth;
+    const wh = wrapperRef.current.offsetHeight;
+    const displayedH = ww * (h / w);
+    if (displayedH >= wh / 2) {
+      // Hochformat/quadratisch: füllt das 50%-Panel vollständig → kein Gap, CSS-Default reicht
+      setSplitY(null);
+    } else {
+      setSplitY(Math.round(displayedH));
+    }
+  }, [isMobile]);
+
+  const handleUpperNaturalDims = useCallback(
+    ({ w, h }) => {
+      upperDimsRef.current = { w, h };
+      recalcSplit();
+    },
+    [recalcSplit],
+  );
+
+  useEffect(() => {
+    if (!isMobile) return;
+    window.addEventListener("resize", recalcSplit);
+    return () => window.removeEventListener("resize", recalcSplit);
+  }, [isMobile, recalcSplit]);
 
   const advanceSide = (side) => {
     if (side === "left") {
@@ -217,20 +318,57 @@ export default function SplitSlideshow() {
   useEffect(() => {
     scheduleNext("left");
     return () => clearTimeout(timerRef.current);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const preloadedVideos = useRef({});
+  const preloadedDims = useRef({});
+
+  // Alles beim Startup vorladen — danach kommt alles aus dem Cache
   useEffect(() => {
-    const nextLeft  = (leftIndex  + 1) % activeLeft.length;
-    const nextRight = (rightIndex + 1) % activeRight.length;
-    if (!isVideo(activeLeft[nextLeft])) {
-      const img = new window.Image();
-      img.src = activeLeft[nextLeft];
-    }
-    if (!isVideo(activeRight[nextRight])) {
-      const img = new window.Image();
-      img.src = activeRight[nextRight];
-    }
-  }, [leftIndex, rightIndex, activeLeft, activeRight]);
+    const all = [...activeLeft, ...activeRight];
+    all.forEach((src) => {
+      if (isVideo(src)) {
+        // fetch() füllt den HTTP-Cache zuverlässiger als video.load() —
+        // besonders auf iOS wo preload="auto" oft ignoriert wird
+        if (!preloadedVideos.current[src]) {
+          preloadedVideos.current[src] = true;
+          // Separates metadata-Element um Seitenverhältnis vorab zu kennen
+          const meta = document.createElement("video");
+          meta.preload = "metadata";
+          meta.muted = true;
+          meta.playsInline = true;
+          meta.onloadedmetadata = () => {
+            if (meta.videoWidth && meta.videoHeight) {
+              preloadedDims.current[src] = {
+                w: meta.videoWidth,
+                h: meta.videoHeight,
+              };
+            }
+          };
+          meta.src = src;
+          fetch(src, { cache: "force-cache" }).catch(() => {
+            const v = document.createElement("video");
+            v.preload = "auto";
+            v.muted = true;
+            v.playsInline = true;
+            v.src = src;
+            v.load();
+          });
+        }
+      } else {
+        if (!preloadedDims.current[src]) {
+          const img = new window.Image();
+          img.onload = () => {
+            preloadedDims.current[src] = {
+              w: img.naturalWidth,
+              h: img.naturalHeight,
+            };
+          };
+          img.src = src;
+        }
+      }
+    });
+  }, [activeLeft, activeRight]);
 
   const handleVideoStart = (side) => {
     videoPlayingRef.current[side] = true;
@@ -259,12 +397,39 @@ export default function SplitSlideshow() {
     scheduleNext(nextAutoSide.current);
   };
 
-  const safeLeftIndex  = leftIndex  % activeLeft.length;
+  const safeLeftIndex = leftIndex % activeLeft.length;
   const safeRightIndex = rightIndex % activeRight.length;
 
+  // splitY aus vorgeladenem Cache setzen wenn das Bild wechselt
+  useEffect(() => {
+    if (!isMobile || !wrapperRef.current) return;
+    const dims = preloadedDims.current[activeLeft[safeLeftIndex]];
+    if (!dims) return;
+    upperDimsRef.current = dims;
+    const { w, h } = dims;
+    if (!w || !h) return;
+    const ww = wrapperRef.current.offsetWidth;
+    const wh = wrapperRef.current.offsetHeight;
+    const displayedH = ww * (h / w);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSplitY(displayedH >= wh / 2 ? null : Math.round(displayedH));
+  }, [safeLeftIndex, isMobile, activeLeft]);
+
+  const effectiveSplitY = isMobile ? splitY : null;
+  const upperPanelStyle =
+    effectiveSplitY !== null ? { height: `${effectiveSplitY}px` } : {};
+  const lowerPanelStyle =
+    effectiveSplitY !== null
+      ? {
+          top: `${effectiveSplitY}px`,
+          bottom: "auto",
+          height: `calc(100% - ${effectiveSplitY}px)`,
+        }
+      : {};
+
   return (
-    <Wrapper onClick={handleClick}>
-      <Panel>
+    <Wrapper ref={wrapperRef} onClick={handleClick}>
+      <Panel style={upperPanelStyle}>
         <MediaItem
           src={activeLeft[safeLeftIndex]}
           videoRef={leftVideoRef}
@@ -272,9 +437,11 @@ export default function SplitSlideshow() {
           onEnded={() => handleVideoEnd("left")}
           priority={safeLeftIndex === 0}
           isMobile={isMobile}
+          mobileContain
+          onNaturalDims={isMobile ? handleUpperNaturalDims : undefined}
         />
       </Panel>
-      <Panel>
+      <Panel style={lowerPanelStyle}>
         <MediaItem
           src={activeRight[safeRightIndex]}
           videoRef={rightVideoRef}
